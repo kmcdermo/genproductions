@@ -68,7 +68,8 @@ if __name__ == "__main__":
     else:
         # search dataset name as name + campaign + datatier
         primary_dataset_name = args.inputdataset.split('/')[1]
-        command="/cvmfs/cms.cern.ch/common/das_client --limit=0 --query=\"dataset dataset=/"+primary_dataset_name+"/*"+args.campaign+"*/"+args.datatier+"\""
+#        command="/cvmfs/cms.cern.ch/common/dasgoclient --limit=0 --query=\"dataset dataset="+args.inputdataset+" instance=prod/phys03 \"" # for signal
+        command="/cvmfs/cms.cern.ch/common/dasgoclient --limit=0 --query=\"dataset dataset="+args.inputdataset+" \""
         dataset_used = commands.getstatusoutput(command)[1].split("\n")
         if debug: print 'command',command,'\n'
         dataset_used = [x.strip() for x in dataset_used][0]
@@ -82,7 +83,8 @@ if __name__ == "__main__":
         # pick up only the first dataset of the list
         if debug: print 'dataset_used',dataset_used
         # retrieve filelist
-        command="/cvmfs/cms.cern.ch/common/das_client --limit=100 --query=\"file dataset="+dataset_used+"\" "
+#        command="/cvmfs/cms.cern.ch/common/dasgoclient --limit=100 --query=\"file dataset="+dataset_used+" instance=prod/phys03 \" " for signal
+        command="/cvmfs/cms.cern.ch/common/dasgoclient --limit=100 --query=\"file dataset="+dataset_used+" \"" 
         if debug: print 'command',command
         filelist_used = "/store"+commands.getstatusoutput(command)[1].replace("\n",",").split("/store",1)[1] 
         if debug: 

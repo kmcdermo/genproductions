@@ -9,14 +9,14 @@
 #   ./getCookie.sh
 
 FILE='datasets.txt'
-CAMPAIGN='Moriond17'
+CAMPAIGN='Fall17'
 DATATIER='MINIAODSIM'
 EVENTS='1000000'
 MCM=False
 SKIPEXISTING=False
 
 DEBUG=False
-# DEBUG=True
+#DEBUG=True
 
 while getopts f:c:d:n:m:s option
 do
