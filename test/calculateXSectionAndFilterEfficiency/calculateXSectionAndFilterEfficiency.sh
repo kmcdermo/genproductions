@@ -1,59 +1,52 @@
-#/bin/bash
+#!/bin/bash
 
-# example usage:
-# calculateXSectionAndFilterEfficiency.sh -f datasets.txt -c Moriond17 -d MINIAODSIM -n 1000000 (-m)
-# documentation
-# https://twiki.cern.ch/twiki/bin/viewauth/CMS/HowToGenXSecAnalyzer#Automated_scripts_to_compute_the
+FILE="datasets.txt"
+INSTANCE="global"
+EVENTS="1000000"
+DEBUG="False"
 
-# To obtain CERN SSO credentials (necessary to read from McM):
-#   ./getCookie.sh
-
-FILE='datasets.txt'
-CAMPAIGN='Moriond17'
-DATATIER='MINIAODSIM'
-EVENTS='1000000'
-MCM=False
-SKIPEXISTING=False
-
-DEBUG=False
-# DEBUG=True
-
-while getopts f:c:d:n:m:s option
+while getopts ":f:i:n:d:" option
 do
-    case "${option}"
-    in
-            f) FILE=${OPTARG};;
-            c) CAMPAIGN=${OPTARG};;
-            d) DATATIER=${OPTARG};;
-            n) EVENTS=${OPTARG};;
-            m) MCM=True;;
-            s) SKIPEXISTING=True;;
+    case "${option}" in
+	f) FILE=${OPTARG}
+	    ;;
+	i) INSTANCE=${OPTARG}
+	    ;;
+        n) EVENTS=${OPTARG}
+	    ;;
+	d) DEBUG=${OPTARG}
+	    ;;
+	\? ) echo "Example usage: ./calculateXSectionAndFilterEfficiency.sh -f datasets.txt -i global -n 100000 -d False"
     esac
 done
 
+function compute_xsec ()
+{
+    local dataset=${1}
+    local name=${2}
+
+    local output=$( python compute_cross_section.py -f "${dataset}" -i "${INSTANCE}" -n "${EVENTS}" -d "${DEBUG}")
+    local outfile="log_${name}.txt"
+
+    if [[ "${DEBUG}" != "True" ]]
+    then
+	if [[ "${output}" == *"cmsRun"* ]] 
+	then
+            eval "${output}"
+	else
+	    echo "FAILED for dataset: ${dataset}" > "${outfile}"
+	fi
+    else
+	echo "compute_cross_section.py -f ${dataset} -i ${INSTANCE} -n ${EVENTS} --debug ${DEBUG}" > "${outfile}"
+	echo "   --> output: " >> "${outfile}"
+	echo "${output}" >> "${outfile}"
+    fi
+}
+export -f compute_xsec
+
 while read -r dataset
 do
-    name="$dataset"
-    echo "Name read from file - $name"
-    
-    echo 'compute_cross_section.py -f '${dataset}' -c '${CAMPAIGN}' -n '${EVENTS}' -d '${DATATIER}' --mcm "'${MCM}'" --skipexisting "'${SKIPEXISTING}'" --debug "'${DEBUG}'"'
-    output="$(python compute_cross_section.py -f "${dataset}" -c "${CAMPAIGN}" -n "${EVENTS}" -d "${DATATIER}" --mcm "${MCM}" --skipexisting "${SKIPEXISTING}" --debug "${DEBUG}")"
-    output="${output#*.txt}"
-    output="${output#*.txt}"
-    
-    if [ "${DEBUG}" != "True" ]; then
-      if [[ $output == *"cmsRun"* ]]; then
-        eval ${output}
-      else
-        echo ${output}
-      fi
-    else
-      echo 'output'
-      echo "${output}"
-      exit 1
-    fi
-    echo ""
-    
-done < "$FILE"
-
-
+    name=$( echo "${dataset}" | cut -d "/" -f 2 )
+    echo "Working on: ${name}"
+    compute_xsec "${dataset}" "${name}" &
+done < "${FILE}"

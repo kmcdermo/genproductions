@@ -1,5 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
+
 options = VarParsing ('analysis')
 options.parseArguments()
 process = cms.Process('XSec')
