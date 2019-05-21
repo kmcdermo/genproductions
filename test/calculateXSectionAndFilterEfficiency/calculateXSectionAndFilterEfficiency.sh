@@ -25,21 +25,23 @@ function compute_xsec ()
     local dataset=${1}
     local name=${2}
 
-    local output=$( python compute_cross_section.py -f "${dataset}" -i "${INSTANCE}" -n "${EVENTS}" -d "${DEBUG}")
-    local outfile="log_${name}.txt"
+    local xsec_command=$( python compute_cross_section.py -f "${dataset}" -i "${INSTANCE}" -n "${EVENTS}" -d "${DEBUG}" )
+    local outfile="xsec_${name}.log"
+    > "${outfile}"
 
     if [[ "${DEBUG}" != "True" ]]
     then
-	if [[ "${output}" == *"cmsRun"* ]] 
+	if [[ "${xsec_command}" == *"cmsRun"* ]] 
 	then
-            eval "${output}"
+	    IFS=" " read -r -a xsec_commands <<< "${xsec_command}"
+	    "${xsec_commands[@]}" &>> "${outfile}" &
 	else
-	    echo "FAILED for dataset: ${dataset}" > "${outfile}"
+	    echo "FAILED for dataset: ${dataset}" >> "${outfile}"
 	fi
     else
-	echo "compute_cross_section.py -f ${dataset} -i ${INSTANCE} -n ${EVENTS} --debug ${DEBUG}" > "${outfile}"
-	echo "   --> output: " >> "${outfile}"
-	echo "${output}" >> "${outfile}"
+	echo "Python command" >> "${outfile}"
+	echo "compute_cross_section.py -f ${dataset} -i ${INSTANCE} -n ${EVENTS} --debug ${DEBUG}" >> "${outfile}"
+	echo "${xsec_command}" >> "${outfile}"
     fi
 }
 export -f compute_xsec
